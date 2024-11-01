@@ -22,7 +22,7 @@
 
 #include "expose_metrics.h"
 #include <stdbool.h>
-#include "cJSON.h"
+#include <cjson/cJSON.h> // Para manejar JSON
 
 /**
  * @brief Tamaño del buffer
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
     pthread_t update_tid;
 
     while (true) {
-        update_metrics(&config);
+        update_metrics(config);
         sleep(config.sampling_interval);
     }
 
