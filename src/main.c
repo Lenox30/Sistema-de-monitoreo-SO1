@@ -47,6 +47,9 @@ typedef struct {
 
 //funcion para actualizar las metricas
 void update_metrics(Config config);
+Config load_config(const char* filename);
+
+
 
 /**
  * @brief Función principal
