@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 project(MetricsProject)
 
 # Includes headers
-include_directories(include)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Incluye las bibliotecas que necesitas (ejemplo: cJSON)
 find_package(cJSON REQUIRED)
