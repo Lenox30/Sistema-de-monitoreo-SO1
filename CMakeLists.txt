@@ -4,6 +4,9 @@ cmake_minimum_required(VERSION 3.10)
 # Nombre del proyecto
 project(MetricsProject)
 
+# Encontrar las bibliotecas 
+find_package(cJSON REQUIRED) 
+
 # Establece el estándar de C para tu proyecto
 set(CMAKE_C_STANDARD 99)
 
@@ -34,3 +37,4 @@ message(STATUS "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH")
 
 find_library(PROM_LIB prom REQUIRED)
 find_library(PROMHTTP_LIB promhttp REQUIRED)
+
