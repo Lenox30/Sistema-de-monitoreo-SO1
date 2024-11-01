@@ -281,23 +281,23 @@ void init_metrics()
     }
 
     // Registramos las métricas en el registro por defecto
-    if (prom_collector_registry_must_register_metric(cpu_usage_metric) != 0 ||
-        prom_collector_registry_must_register_metric(memory_usage_metric) != 0 ||
-        prom_collector_registry_must_register_metric(total_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(used_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(available_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_read_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_write_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_io_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_bytes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_errors_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_dropped_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) != 0 ||
-        prom_collector_registry_must_register_metric(running_processes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(context_switches_metric) != 0)
+    if (prom_collector_registry_must_register_metric(cpu_usage_metric) == 0 ||
+        prom_collector_registry_must_register_metric(memory_usage_metric) == 0 ||
+        prom_collector_registry_must_register_metric(total_memory_metric) == 0 ||
+        prom_collector_registry_must_register_metric(used_memory_metric) == 0 ||
+        prom_collector_registry_must_register_metric(available_memory_metric) == 0 ||
+        prom_collector_registry_must_register_metric(disk_read_time_metric) == 0 ||
+        prom_collector_registry_must_register_metric(disk_write_time_metric) == 0 ||
+        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) == 0 ||
+        prom_collector_registry_must_register_metric(disk_io_time_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_received_bytes_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_received_errors_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_received_dropped_metric) == 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) == 0 ||
+        prom_collector_registry_must_register_metric(running_processes_metric) == 0 ||
+        prom_collector_registry_must_register_metric(context_switches_metric) == 0)
 
     {
         fprintf(stderr, "Error al registrar las métricas\n");
