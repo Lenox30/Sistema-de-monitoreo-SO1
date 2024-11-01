@@ -60,7 +60,7 @@ Config load_config(const char* filename);
 int main(int argc, char* argv[])
 {
     // Cargar la configuración
-    Config config = load_config("config.json");
+    Config config = load_config("../config.json");
 
     // Inicializamos Metricas
     init_metrics();
