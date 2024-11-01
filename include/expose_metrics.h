@@ -4,7 +4,7 @@
  */
 
 #include "metrics.h"
-#include "read_cpu_usage.h"
+// #include "read_cpu_usage.h"
 #include <errno.h>
 #include <prom.h>
 #include <promhttp.h>
@@ -14,7 +14,11 @@
 #include <string.h>
 #include <unistd.h> // Para sleep
 
-#define BUFFER_SIZE 256
+/**
+ * @brief Tamaño del buffer
+ * Tamaño del buffer
+ */
+#define BUFFER_SIZE 256 // Tamaño del buffer
 
 /**
  * @brief Actualiza la métrica de uso de CPU.
@@ -25,6 +29,26 @@ void update_cpu_gauge();
  * @brief Actualiza la métrica de uso de memoria.
  */
 void update_memory_gauge();
+
+/**
+ * @brief Actualiza las métricas de disco.
+ */
+void update_disk_gauge();
+
+/**
+ * @brief Actualiza las métricas de red.
+ */
+void update_network_gauge();
+
+/**
+ * @brief Actualiza la métrica de procesos en ejecución.
+ */
+void update_proccess_gauge();
+
+/**
+ * @brief Actualiza la métrica de cambios de contexto.
+ */
+void update_context_switches_gauge();
 
 /**
  * @brief Función del hilo para exponer las métricas vía HTTP en el puerto 8000.

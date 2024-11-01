@@ -1,3 +1,8 @@
+/**
+ * @file expose_metrics.c
+ * @brief Implementación de las funciones para exponer métricas de sistema vía HTTP
+ */
+
 #include "expose_metrics.h"
 
 /** Mutex para sincronización de hilos */
@@ -6,9 +11,48 @@ pthread_mutex_t lock;
 /** Métrica de Prometheus para el uso de CPU */
 static prom_gauge_t* cpu_usage_metric;
 
-/** Métrica de Prometheus para el uso de memoria */
+/** Métrica de Prometheus para el uso de memoria en %*/
 static prom_gauge_t* memory_usage_metric;
+/** Métrica de Prometheus para el total de memoria */
+static prom_gauge_t* total_memory_metric;
+/** Métrica de Prometheus para memoria libre*/
+static prom_gauge_t* available_memory_metric;
+/** Métrica de Prometheus para memoria usada en KB*/
+static prom_gauge_t* used_memory_metric;
 
+/** Métrica de Prometheus para el tiempo de lectura del disco */
+static prom_gauge_t* disk_read_time_metric;
+/** Métrica de Prometheus para el tiempo de escritura del disco */
+static prom_gauge_t* disk_write_time_metric;
+/** Métrica de Prometheus para el número de operaciones de E/S en progreso */
+static prom_gauge_t* disk_io_in_progress_metric;
+/** Métrica de Prometheus para el tiempo de E/S del disco */
+static prom_gauge_t* disk_io_time_metric;
+/** Estructura para almacenar las métricas de disco */
+DiskMetrics metrics_disk;
+
+/** Métrica de Prometheus para los bytes recibidos por la red */
+static prom_gauge_t* network_received_bytes_metric;
+/** Métrica de Prometheus para los bytes transmitidos por la red */
+static prom_gauge_t* network_transmitted_bytes_metric;
+/**Metrica de Prometheus para errores recibidos*/
+static prom_gauge_t* network_received_errors_metric;
+/**Metrica de Prometheus para errores transmitidos*/
+static prom_gauge_t* network_transmitted_errors_metric;
+/**Metrica de Prometheus para paquetes recibidos*/
+static prom_gauge_t* network_received_dropped_metric;
+/**Metrica de Prometheus para paquetes transmitidos*/
+static prom_gauge_t* network_transmitted_dropped_metric;
+/** Estructura para almacenar las métricas de red */
+NetworkMetrics metrics_network;
+
+/** Métrica de Prometheus para el número de procesos en ejecución */
+static prom_gauge_t* running_processes_metric;
+
+/** Métrica de Prometheus para la cantidad de cambios de contexto */
+static prom_gauge_t* context_switches_metric;
+
+// Actualiza la métrica de uso de CPU
 void update_cpu_gauge()
 {
     double usage = get_cpu_usage();
@@ -24,13 +68,20 @@ void update_cpu_gauge()
     }
 }
 
+// Actualiza las métricas de memoria
 void update_memory_gauge()
 {
     double usage = get_memory_usage();
-    if (usage >= 0)
+    double total = get_memory_total();
+    double used = get_memory_used();
+    double available = get_memory_free();
+    if (usage >= 0 && total >= 0 && used >= 0 && available >= 0)
     {
         pthread_mutex_lock(&lock);
         prom_gauge_set(memory_usage_metric, usage, NULL);
+        prom_gauge_set(total_memory_metric, total, NULL);
+        prom_gauge_set(used_memory_metric, used, NULL);
+        prom_gauge_set(available_memory_metric, available, NULL);
         pthread_mutex_unlock(&lock);
     }
     else
@@ -39,6 +90,80 @@ void update_memory_gauge()
     }
 }
 
+// Actualiza las métricas de disco
+void update_disk_gauge()
+{
+
+    int disk_metrics = get_disk_metrics(&metrics_disk);
+    if (disk_metrics >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(disk_read_time_metric, metrics_disk.read_time_ms, NULL);
+        prom_gauge_set(disk_write_time_metric, metrics_disk.write_time_ms, NULL);
+        prom_gauge_set(disk_io_in_progress_metric, metrics_disk.io_in_progress, NULL);
+        prom_gauge_set(disk_io_time_metric, metrics_disk.io_time_ms, NULL);
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener las métricas de disco\n");
+    }
+}
+
+// Actualiza las métricas de red
+void update_network_gauge()
+{
+    int network_metrics = get_network_metrics(&metrics_network);
+    if (network_metrics >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(network_received_bytes_metric, metrics_network.receive_bytes, NULL);
+        prom_gauge_set(network_transmitted_bytes_metric, metrics_network.transmit_bytes, NULL);
+        prom_gauge_set(network_received_errors_metric, metrics_network.receive_errors, NULL);
+        prom_gauge_set(network_transmitted_errors_metric, metrics_network.transmit_errors, NULL);
+        prom_gauge_set(network_received_dropped_metric, metrics_network.receive_dropped, NULL);
+        prom_gauge_set(network_transmitted_dropped_metric, metrics_network.transmit_dropped, NULL);
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener las métricas de red\n");
+    }
+}
+
+// Actualiza la métrica de procesos en ejecución
+void update_proccess_gauge()
+{
+    int running_processes = get_running_processes();
+    if (running_processes >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(running_processes_metric, running_processes, NULL);
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener el número de procesos en ejecución\n");
+    }
+}
+
+// Actualiza la métrica de cambios de contexto
+void update_context_switches_gauge()
+{
+    double context_switches = get_context_switches();
+    if (context_switches >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(context_switches_metric, context_switches, NULL);
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener la cantidad de cambios de contexto\n");
+    }
+}
+
+// Función del hilo para exponer las métricas vía HTTP en el puerto 8000
 void* expose_metrics(void* arg)
 {
     (void)arg; // Argumento no utilizado
@@ -65,6 +190,7 @@ void* expose_metrics(void* arg)
     return NULL;
 }
 
+// Inicializar mutex y métricas
 void init_metrics()
 {
     // Inicializamos el mutex
@@ -97,15 +223,89 @@ void init_metrics()
         return EXIT_FAILURE;
     }
 
+    // Creamos las métricas de memoria (total, usada, disponible)
+    total_memory_metric = prom_gauge_new("total_memory_mb", "Memoria total en MB", 0, NULL);
+    used_memory_metric = prom_gauge_new("used_memory_mb", "Memoria usada en MB", 0, NULL);
+    available_memory_metric = prom_gauge_new("available_memory_mb", "Memoria disponible en MB", 0, NULL);
+    if (total_memory_metric == NULL || used_memory_metric == NULL || available_memory_metric == NULL)
+    {
+        fprintf(stderr, "Error al crear la métricas de memoria\n");
+        return EXIT_FAILURE;
+    }
+
+    // Creamos las métricas de disco
+    disk_read_time_metric = prom_gauge_new("disk_read_time_ms", "Tiempo de lectura del disco en ms", 0, NULL);
+    disk_write_time_metric = prom_gauge_new("disk_write_time_ms", "Tiempo de escritura del disco en ms", 0, NULL);
+    disk_io_in_progress_metric = prom_gauge_new("disk_io_in_progress", "Operaciones de E/S en progreso", 0, NULL);
+    disk_io_time_metric = prom_gauge_new("disk_io_time_ms", "Tiempo de E/S del disco en ms", 0, NULL);
+    if (disk_read_time_metric == NULL || disk_write_time_metric == NULL || disk_io_in_progress_metric == NULL ||
+        disk_io_time_metric == NULL)
+    {
+        fprintf(stderr, "Error al crear las métricas de disco\n");
+        return EXIT_FAILURE;
+    }
+
+    // Creamos las métricas de red
+    network_received_bytes_metric = prom_gauge_new("network_received_bytes", "Bytes recibidos por la red", 0, NULL);
+    network_transmitted_bytes_metric =
+        prom_gauge_new("network_transmitted_bytes", "Bytes transmitidos por la red", 0, NULL);
+    network_received_errors_metric = prom_gauge_new("network_received_errors", "Errores recibidos por la red", 0, NULL);
+    network_transmitted_errors_metric =
+        prom_gauge_new("network_transmitted_errors", "Errores transmitidos por la red", 0, NULL);
+    network_received_dropped_metric =
+        prom_gauge_new("network_received_dropped", "Paquetes recibidos por la red", 0, NULL);
+    network_transmitted_dropped_metric =
+        prom_gauge_new("network_transmitted_dropped", "Paquetes transmitidos por la red", 0, NULL);
+    if (network_received_bytes_metric == NULL || network_transmitted_bytes_metric == NULL ||
+        network_received_errors_metric == NULL || network_transmitted_errors_metric == NULL ||
+        network_received_dropped_metric == NULL || network_transmitted_dropped_metric == NULL)
+    {
+        fprintf(stderr, "Error al crear las métricas de red\n");
+        return EXIT_FAILURE;
+    }
+
+    // Creamos la métrica para el número de procesos en ejecución
+    running_processes_metric = prom_gauge_new("running_processes", "Número de procesos en ejecución", 0, NULL);
+    if (running_processes_metric == NULL)
+    {
+        fprintf(stderr, "Error al crear la métrica de procesos en ejecución\n");
+        return EXIT_FAILURE;
+    }
+
+    // Creamos la métrica para la cantidad de cambios de contexto
+    context_switches_metric = prom_gauge_new("context_switches", "Cantidad de cambios de contexto", 0, NULL);
+    if (context_switches_metric == NULL)
+    {
+        fprintf(stderr, "Error al crear la métrica de cambios de contexto\n");
+        return EXIT_FAILURE;
+    }
+
     // Registramos las métricas en el registro por defecto
     if (prom_collector_registry_must_register_metric(cpu_usage_metric) != 0 ||
-        prom_collector_registry_must_register_metric(memory_usage_metric) != 0)
+        prom_collector_registry_must_register_metric(memory_usage_metric) != 0 ||
+        prom_collector_registry_must_register_metric(total_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(used_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(available_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_read_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_write_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_io_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_bytes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_errors_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_dropped_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) != 0 ||
+        prom_collector_registry_must_register_metric(running_processes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(context_switches_metric) != 0)
+
     {
         fprintf(stderr, "Error al registrar las métricas\n");
         return EXIT_FAILURE;
     }
 }
 
+// Destructor de mutex
 void destroy_mutex()
 {
     pthread_mutex_destroy(&lock);
