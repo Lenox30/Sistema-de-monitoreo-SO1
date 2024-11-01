@@ -38,3 +38,5 @@ message(STATUS "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH")
 find_library(PROM_LIB prom REQUIRED)
 find_library(PROMHTTP_LIB promhttp REQUIRED)
 
+# Link libraries
+target_link_libraries(${PROJECT_NAME} PRIVATE cjson::cjson unity::unity)  # Asegúrate de enlazar unity también
