@@ -1,42 +1,17 @@
-# Especifica la versión mínima de CMake
 cmake_minimum_required(VERSION 3.10)
-
-# Nombre del proyecto
 project(MetricsProject)
 
-# Encontrar las bibliotecas 
-find_package(cJSON REQUIRED) 
+# Incluye las bibliotecas que necesitas (ejemplo: cJSON)
+find_package(cJSON REQUIRED)
 
-# Establece el estándar de C para tu proyecto
-set(CMAKE_C_STANDARD 99)
+# Agrega los archivos de tu proyecto al ejecutable
+add_executable(MetricsProject src/main.c src/metrics.c src/expose_metrics.c)
 
-# Incluye el directorio de encabezados
-include_directories(include)
+# Incluye los directorios de encabezados
+target_include_directories(MetricsProject PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
-# Añade los archivos fuente al proyecto
-set(SOURCES
-    src/metrics.c
-    src/main.c
-    src/expose_metrics.c
-)
+# Enlaza las bibliotecas necesarias al objetivo `MetricsProject`
+target_link_libraries(MetricsProject PRIVATE cJSON)
 
-# Crea el ejecutable
-add_executable(metrics ${SOURCES})
-
-# Especifica las bibliotecas externas a enlazar
-target_link_libraries(metrics prom promhttp pthread)
-
-# Establece el directorio de salida para el ejecutable
-set_target_properties(metrics PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)
-
-# Mensaje recordatorio para la biblioteca compartida
-message(STATUS "Para ejecutar, asegúrate de tener configurado LD_LIBRARY_PATH:")
-message(STATUS "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH")
-
-find_library(PROM_LIB prom REQUIRED)
-find_library(PROMHTTP_LIB promhttp REQUIRED)
-
-# Link libraries
-target_link_libraries(${PROJECT_NAME} PRIVATE cjson::cjson unity::unity)  # Asegúrate de enlazar unity también
+# Otras opciones de configuración, si es necesario
+set_target_properties(MetricsProject PROPERTIES C_STANDARD 11)
