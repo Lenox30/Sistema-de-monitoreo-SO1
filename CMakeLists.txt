@@ -1,33 +1,36 @@
+# Especifica la versión mínima de CMake
 cmake_minimum_required(VERSION 3.10)
 
 # Nombre del proyecto
-project(MetricsApp)
+project(MetricsProject)
 
-# Añadir el directorio de inclusión
+# Establece el estándar de C para tu proyecto
+set(CMAKE_C_STANDARD 99)
+
+# Incluye el directorio de encabezados
 include_directories(include)
 
-# Establecer la ruta donde están las bibliotecas
-link_directories(lib/Prometheus-client-c)  # Ajusta la ruta según donde estén tus bibliotecas
-
-# Incluir los directorios de encabezados de Prometheus
-include_directories(lib/Prometheus-client-c/prom)  # Ajusta para que incluya los headers
-
-# Enlazar las bibliotecas necesarias
-target_link_libraries(metrics PRIVATE prom pthread promhttp)
-
-# Definir los archivos fuente
-set(SRC_FILES
-    src/expose_metrics.c
+# Añade los archivos fuente al proyecto
+set(SOURCES
     src/metrics.c
     src/main.c
+    src/expose_metrics.c
 )
 
-# Crear el ejecutable
-add_executable(metrics ${SRC_FILES})
+# Crea el ejecutable
+add_executable(metrics ${SOURCES})
 
-# Enlazar bibliotecas necesarias
-target_link_libraries(metrics prom pthread promhttp)
+# Especifica las bibliotecas externas a enlazar
+target_link_libraries(metrics prom promhttp pthread)
 
-# Establecer el directorio de salida
-set_target_properties(metrics PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build)
+# Establece el directorio de salida para el ejecutable
+set_target_properties(metrics PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
 
+# Mensaje recordatorio para la biblioteca compartida
+message(STATUS "Para ejecutar, asegúrate de tener configurado LD_LIBRARY_PATH:")
+message(STATUS "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH")
+
+find_library(PROM_LIB prom REQUIRED)
+find_library(PROMHTTP_LIB promhttp REQUIRED)
