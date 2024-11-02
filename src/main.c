@@ -30,6 +30,14 @@
  */
 #define BUFFER_SIZE 256
 
+/**
+ * @brief Estructura de configuración
+ *
+ * Esta estructura contiene la configuración del sistema, incluyendo el intervalo de muestreo
+ * y las métricas a monitorear.
+ */
+#define intervalo 10 
+
 /*
  * @brief estructura de configuracion
  *
@@ -125,7 +133,7 @@ void update_metrics(Config config)
 // Función para cargar la configuración desde un archivo JSON
 Config load_config(const char* filename)
 {
-    Config config = {NULL, NULL, 0};
+    Config config = {intervalo, NULL, 0};
 
     FILE* file = fopen(filename, "r");
     if (file == NULL)
