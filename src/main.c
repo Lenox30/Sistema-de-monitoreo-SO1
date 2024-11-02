@@ -147,7 +147,13 @@ Config load_config(const char* filename)
     long length = ftell(file);
     fseek(file, 0, SEEK_SET);
     char* json_data = (char*)malloc(length + 1);
-    fread(json_data, 1, length, file);
+    if (fread(json_data, 1, length, file) != length)
+    {
+        perror("Error al leer el archivo de configuración");
+        free(json_data);
+        fclose(file);
+        return config; // Retornar la configuración por defecto
+    }
     fclose(file);
     json_data[length] = '\0';
 
