@@ -49,8 +49,19 @@ typedef struct
     int metrics_count;     // Cantidad de métricas
 } Config;
 
-// funcion para actualizar las metricas
+/**
+ * @brief Actualiza las métricas del sistema según la configuración proporcionada.
+ * 
+ * @param config Estructura de configuración que contiene los parámetros necesarios para actualizar las métricas.
+ */
 void update_metrics(Config config);
+
+/**
+ * @brief Carga la configuración desde un archivo.
+ * 
+ * @param filename Ruta del archivo de configuración.
+ * @return Config Estructura de configuración cargada desde el archivo.
+ */
 Config load_config(const char* filename);
 
 /**
@@ -98,8 +109,14 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Actualiza las métricas del sistema según la configuración proporcionada.
+ * 
+ * @param config Estructura de configuración que contiene los parámetros necesarios para actualizar las métricas.
+ */
 void update_metrics(Config config)
 {
+    // Actualizar las métricas según la configuración
     for (int i = 0; i < config.metrics_count; i++)
     {
         if (strcmp(config.metrics[i], "cpu_usage") == 0)
@@ -130,12 +147,17 @@ void update_metrics(Config config)
     }
 }
 
-// Función para cargar la configuración desde un archivo JSON
+/**
+ * @brief Carga la configuración desde un archivo.
+ * 
+ * @param filename Ruta del archivo de configuración.
+ * @return Config Estructura de configuración cargada desde el archivo.
+ */
 Config load_config(const char* filename)
 {
-    Config config = {intervalo, NULL, 0};
+    Config config = {intervalo, NULL, 0};   // Configuración por defecto
 
-    FILE* file = fopen(filename, "r");
+    FILE* file = fopen(filename, "r");  // Abrir el archivo en modo lectura
     if (file == NULL)
     {
         perror("Error al abrir el archivo de configuración");
