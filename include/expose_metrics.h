@@ -60,7 +60,7 @@ void* expose_metrics(void* arg);
 /**
  * @brief Inicializar mutex y métricas.
  */
-void init_metrics();
+int init_metrics();
 
 /**
  * @brief Destructor de mutex

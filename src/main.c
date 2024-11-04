@@ -90,6 +90,10 @@ int main(int argc, char* argv[])
     return EXIT_SUCCESS;
 }
 
+/**
+ * @brief Actualizar las métricas según la configuración.
+ * @param config Configuración con las métricas a actualizar.
+ */
 void update_metrics(Config config)
 {
     for (int i = 0; i < config.metrics_count; i++)
@@ -122,7 +126,11 @@ void update_metrics(Config config)
     }
 }
 
-// Función para cargar la configuración desde un archivo JSON
+/**
+ * @brief Cargar la configuración desde un archivo JSON.
+ * @param filename Nombre del archivo JSON.
+ * @return Configuración cargada.
+ */
 Config load_config(const char* filename)
 {
     Config config = {NULL, NULL, 0};

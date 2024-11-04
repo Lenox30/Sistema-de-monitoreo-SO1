@@ -191,7 +191,7 @@ void* expose_metrics(void* arg)
 }
 
 // Inicializar mutex y métricas
-void init_metrics()
+int init_metrics()
 {
     // Inicializamos el mutex
     if (pthread_mutex_init(&lock, NULL) != 0)
