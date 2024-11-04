@@ -30,6 +30,14 @@
  */
 #define BUFFER_SIZE 256
 
+/**
+ * @brief Estructura de configuración
+ *
+ * Esta estructura contiene la configuración del sistema, incluyendo el intervalo de muestreo
+ * y las métricas a monitorear.
+ */
+#define intervalo 10 
+
 /*
  * @brief estructura de configuracion
  *
@@ -41,8 +49,19 @@ typedef struct
     int metrics_count;     // Cantidad de métricas
 } Config;
 
-// funcion para actualizar las metricas
+/**
+ * @brief Actualiza las métricas del sistema según la configuración proporcionada.
+ * 
+ * @param config Estructura de configuración que contiene los parámetros necesarios para actualizar las métricas.
+ */
 void update_metrics(Config config);
+
+/**
+ * @brief Carga la configuración desde un archivo.
+ * 
+ * @param filename Ruta del archivo de configuración.
+ * @return Config Estructura de configuración cargada desde el archivo.
+ */
 Config load_config(const char* filename);
 
 /**
@@ -91,11 +110,13 @@ int main(int argc, char* argv[])
 }
 
 /**
- * @brief Actualizar las métricas según la configuración.
- * @param config Configuración con las métricas a actualizar.
+ * @brief Actualiza las métricas del sistema según la configuración proporcionada.
+ * 
+ * @param config Estructura de configuración que contiene los parámetros necesarios para actualizar las métricas.
  */
 void update_metrics(Config config)
 {
+    // Actualizar las métricas según la configuración
     for (int i = 0; i < config.metrics_count; i++)
     {
         if (strcmp(config.metrics[i], "cpu_usage") == 0)
@@ -127,15 +148,16 @@ void update_metrics(Config config)
 }
 
 /**
- * @brief Cargar la configuración desde un archivo JSON.
- * @param filename Nombre del archivo JSON.
- * @return Configuración cargada.
+ * @brief Carga la configuración desde un archivo.
+ * 
+ * @param filename Ruta del archivo de configuración.
+ * @return Config Estructura de configuración cargada desde el archivo.
  */
 Config load_config(const char* filename)
 {
-    Config config = {NULL, NULL, 0};
+    Config config = {intervalo, NULL, 0};   // Configuración por defecto
 
-    FILE* file = fopen(filename, "r");
+    FILE* file = fopen(filename, "r");  // Abrir el archivo en modo lectura
     if (file == NULL)
     {
         perror("Error al abrir el archivo de configuración");
@@ -147,7 +169,13 @@ Config load_config(const char* filename)
     long length = ftell(file);
     fseek(file, 0, SEEK_SET);
     char* json_data = (char*)malloc(length + 1);
-    fread(json_data, 1, length, file);
+    if (fread(json_data, 1, length, file) != length)
+    {
+        perror("Error al leer el archivo de configuración");
+        free(json_data);
+        fclose(file);
+        return config; // Retornar la configuración por defecto
+    }
     fclose(file);
     json_data[length] = '\0';
 
