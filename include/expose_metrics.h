@@ -66,4 +66,3 @@ int init_metrics(void);
  * @brief Destructor de mutex
  */
 void destroy_mutex(void);
-

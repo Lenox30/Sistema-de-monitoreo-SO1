@@ -358,5 +358,5 @@ long long get_context_switches(void)
     }
 
     fclose(fp);
-    return (long long) context_switches;
+    return (long long)context_switches;
 }

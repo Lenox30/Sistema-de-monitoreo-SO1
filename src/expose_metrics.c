@@ -62,7 +62,6 @@ int update_cpu_gauge()
         prom_gauge_set(cpu_usage_metric, usage, NULL);
         pthread_mutex_unlock(&lock);
 
-
         return EXIT_SUCCESS;
     }
     else
