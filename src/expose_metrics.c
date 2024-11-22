@@ -53,7 +53,7 @@ static prom_gauge_t* running_processes_metric;
 static prom_gauge_t* context_switches_metric;
 
 // Actualiza la métrica de uso de CPU
-void update_cpu_gauge()
+int update_cpu_gauge()
 {
     double usage = get_cpu_usage();
     if (usage >= 0)
@@ -61,15 +61,19 @@ void update_cpu_gauge()
         pthread_mutex_lock(&lock);
         prom_gauge_set(cpu_usage_metric, usage, NULL);
         pthread_mutex_unlock(&lock);
+
+
+        return EXIT_SUCCESS;
     }
     else
     {
         fprintf(stderr, "Error al obtener el uso de CPU\n");
+        return EXIT_FAILURE;
     }
 }
 
 // Actualiza las métricas de memoria
-void update_memory_gauge()
+int update_memory_gauge()
 {
     double usage = get_memory_usage();
     double total = get_memory_total();
@@ -83,10 +87,12 @@ void update_memory_gauge()
         prom_gauge_set(used_memory_metric, used, NULL);
         prom_gauge_set(available_memory_metric, available, NULL);
         pthread_mutex_unlock(&lock);
+        return EXIT_SUCCESS;
     }
     else
     {
         fprintf(stderr, "Error al obtener el uso de memoria\n");
+        return EXIT_FAILURE;
     }
 }
 
@@ -98,10 +104,10 @@ void update_disk_gauge()
     if (disk_metrics >= 0)
     {
         pthread_mutex_lock(&lock);
-        prom_gauge_set(disk_read_time_metric, metrics_disk.read_time_ms, NULL);
-        prom_gauge_set(disk_write_time_metric, metrics_disk.write_time_ms, NULL);
-        prom_gauge_set(disk_io_in_progress_metric, metrics_disk.io_in_progress, NULL);
-        prom_gauge_set(disk_io_time_metric, metrics_disk.io_time_ms, NULL);
+        prom_gauge_set(disk_read_time_metric, (double)metrics_disk.read_time_ms, NULL);
+        prom_gauge_set(disk_write_time_metric, (double)metrics_disk.write_time_ms, NULL);
+        prom_gauge_set(disk_io_in_progress_metric, (double)metrics_disk.io_in_progress, NULL);
+        prom_gauge_set(disk_io_time_metric, (double)metrics_disk.io_time_ms, NULL);
         pthread_mutex_unlock(&lock);
     }
     else
@@ -117,12 +123,12 @@ void update_network_gauge()
     if (network_metrics >= 0)
     {
         pthread_mutex_lock(&lock);
-        prom_gauge_set(network_received_bytes_metric, metrics_network.receive_bytes, NULL);
-        prom_gauge_set(network_transmitted_bytes_metric, metrics_network.transmit_bytes, NULL);
-        prom_gauge_set(network_received_errors_metric, metrics_network.receive_errors, NULL);
-        prom_gauge_set(network_transmitted_errors_metric, metrics_network.transmit_errors, NULL);
-        prom_gauge_set(network_received_dropped_metric, metrics_network.receive_dropped, NULL);
-        prom_gauge_set(network_transmitted_dropped_metric, metrics_network.transmit_dropped, NULL);
+        prom_gauge_set(network_received_bytes_metric, (double)metrics_network.receive_bytes, NULL);
+        prom_gauge_set(network_transmitted_bytes_metric, (double)metrics_network.transmit_bytes, NULL);
+        prom_gauge_set(network_received_errors_metric, (double)metrics_network.receive_errors, NULL);
+        prom_gauge_set(network_transmitted_errors_metric, (double)metrics_network.transmit_errors, NULL);
+        prom_gauge_set(network_received_dropped_metric, (double)metrics_network.receive_dropped, NULL);
+        prom_gauge_set(network_transmitted_dropped_metric, (double)metrics_network.transmit_dropped, NULL);
         pthread_mutex_unlock(&lock);
     }
     else
@@ -150,7 +156,7 @@ void update_proccess_gauge()
 // Actualiza la métrica de cambios de contexto
 void update_context_switches_gauge()
 {
-    double context_switches = get_context_switches();
+    double context_switches = (double)get_context_switches();
     if (context_switches >= 0)
     {
         pthread_mutex_lock(&lock);
@@ -281,24 +287,24 @@ int init_metrics()
     }
 
     // Registramos las métricas en el registro por defecto
-    if (prom_collector_registry_must_register_metric(cpu_usage_metric) == 0 ||
-        prom_collector_registry_must_register_metric(memory_usage_metric) == 0 ||
-        prom_collector_registry_must_register_metric(total_memory_metric) == 0 ||
-        prom_collector_registry_must_register_metric(used_memory_metric) == 0 ||
-        prom_collector_registry_must_register_metric(available_memory_metric) == 0 ||
-        prom_collector_registry_must_register_metric(disk_read_time_metric) == 0 ||
-        prom_collector_registry_must_register_metric(disk_write_time_metric) == 0 ||
-        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) == 0 ||
-        prom_collector_registry_must_register_metric(disk_io_time_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_received_bytes_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_received_errors_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_received_dropped_metric) == 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) == 0 ||
-        prom_collector_registry_must_register_metric(running_processes_metric) == 0 ||
-        prom_collector_registry_must_register_metric(context_switches_metric) == 0)
-
+    if (prom_collector_registry_must_register_metric(cpu_usage_metric) != 0 ||
+        prom_collector_registry_must_register_metric(memory_usage_metric) != 0 ||
+        prom_collector_registry_must_register_metric(total_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(used_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(available_memory_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_read_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_write_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) != 0 ||
+        prom_collector_registry_must_register_metric(disk_io_time_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_bytes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_errors_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_received_dropped_metric) != 0 ||
+        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) != 0 ||
+        prom_collector_registry_must_register_metric(running_processes_metric) != 0 ||
+        prom_collector_registry_must_register_metric(context_switches_metric) != 0)
+        return EXIT_SUCCESS;
     {
         fprintf(stderr, "Error al registrar las métricas\n");
         return EXIT_FAILURE;

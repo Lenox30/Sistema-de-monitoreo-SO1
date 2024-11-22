@@ -9,7 +9,7 @@
 #include "metrics.h"
 
 // Función para obtener la memoria total en MB
-double get_memory_total()
+double get_memory_total(void)
 {
     FILE* fp;
     char buffer[BUFFER_SIZE];
@@ -42,11 +42,11 @@ double get_memory_total()
     }
 
     // Convertir de kB a MB
-    return total_mem_aux / 1024.0; // Retornar la memoria total en MB
+    return (double)total_mem_aux / 1024.0; // Retornar la memoria total en MB
 }
 
 // Función para obtener la memoria libre en MB
-double get_memory_free()
+double get_memory_free(void)
 {
     FILE* fp;
     char buffer[BUFFER_SIZE];
@@ -79,11 +79,11 @@ double get_memory_free()
     }
 
     // Convertir de kB a MB
-    return free_mem_aux / 1024.0; // Retornar la memoria libre en MB
+    return (double)free_mem_aux / 1024.0; // Retornar la memoria libre en MB
 }
 
 // Función para calcular el uso de memoria
-double get_memory_usage()
+double get_memory_usage(void)
 {
     double total_mem = get_memory_total();
     double free_mem = get_memory_free();
@@ -99,7 +99,7 @@ double get_memory_usage()
 }
 
 // Función para obtener la memoria usada en MB
-double get_memory_used()
+double get_memory_used(void)
 {
     double mem_used = 0;
     double free_mem = get_memory_free();
@@ -109,7 +109,7 @@ double get_memory_used()
 }
 
 // Función para obtener el uso de CPU
-double get_cpu_usage()
+double get_cpu_usage(void)
 {
     static unsigned long long prev_user = 0, prev_nice = 0, prev_system = 0, prev_idle = 0, prev_iowait = 0,
                               prev_irq = 0, prev_softirq = 0, prev_steal = 0;
@@ -163,7 +163,7 @@ double get_cpu_usage()
     }
 
     // Calcular el porcentaje de uso de CPU
-    cpu_usage_percent = ((double)(totald - idled) / totald) * 100.0;
+    cpu_usage_percent = ((double)(totald - idled) / (double)totald) * 100.0;
 
     // Actualizar los valores anteriores para la siguiente lectura
     prev_user = user;
@@ -292,7 +292,7 @@ int get_network_metrics(NetworkMetrics* metrics)
 }
 
 // Función para obtener el número de procesos en ejecución
-int get_running_processes()
+int get_running_processes(void)
 {
     FILE* fp;
     char buffer[BUFFER_SIZE];
@@ -332,7 +332,7 @@ int get_running_processes()
 }
 
 // Función para obtener la cantidad de cambios de contexto
-unsigned long long get_context_switches()
+long long get_context_switches(void)
 {
     FILE* fp;
     char buffer[BUFFER_SIZE];
@@ -358,5 +358,5 @@ unsigned long long get_context_switches()
     }
 
     fclose(fp);
-    return context_switches;
+    return (long long) context_switches;
 }

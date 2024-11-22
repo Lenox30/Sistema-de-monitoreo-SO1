@@ -46,7 +46,7 @@ typedef struct
  *
  * @return Cantidad de cambios de contexto, o -1 en caso de error.
  */
-unsigned long long get_context_switches();
+long long get_context_switches(void);
 
 /**
  * @brief Obtiene la cantidad de procesos en ejecución.
@@ -55,7 +55,7 @@ unsigned long long get_context_switches();
  *
  * @return Cantidad de procesos en ejecución, o -1 en caso de error.
  */
-int get_running_processes();
+int get_running_processes(void);
 
 /**
  * @brief Obtiene las métricas de red desde /proc/net/dev.
@@ -74,7 +74,7 @@ int get_network_metrics(NetworkMetrics*);
  *
  * @return Uso de memoria como porcentaje (0.0 a 100.0), o -1.0 en caso de error.
  */
-double get_memory_usage();
+double get_memory_usage(void);
 
 /**
  * @brief Obtiene el valor de uso de memoria.
@@ -84,7 +84,7 @@ double get_memory_usage();
  *
  * @return Memoria total en KB, o -1.0 en caso de error.
  */
-double get_memory_total();
+double get_memory_total(void);
 
 /**
  * @brief Obtiene el valor de la memoria libre.
@@ -94,7 +94,7 @@ double get_memory_total();
  *
  * @return Memoria libre en KB, o -1.0 en caso de error.
  */
-double get_memory_free();
+double get_memory_free(void);
 
 /**
  * @brief Obtiene el valor de la memoria usada.
@@ -103,7 +103,7 @@ double get_memory_free();
  *
  * @return Memoria usada en KB, o -1.0 en caso de error.
  */
-double get_memory_used();
+double get_memory_used(void);
 
 /**
  * @brief Obtiene el porcentaje de uso de CPU desde /proc/stat.
@@ -113,7 +113,7 @@ double get_memory_used();
  *
  * @return Uso de CPU como porcentaje (0.0 a 100.0), o -1.0 en caso de error.
  */
-double get_cpu_usage();
+double get_cpu_usage(void);
 /**
  * @brief Obtiene las métricas de disco desde /proc/diskstats.
  *

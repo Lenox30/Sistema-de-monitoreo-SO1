@@ -72,6 +72,8 @@ Config load_config(const char* filename);
  */
 int main(int argc, char* argv[])
 {
+    (void)argc;
+    (void)argv;
     // Cargar la configuración
     Config config = load_config("../config.json");
 
@@ -92,7 +94,7 @@ int main(int argc, char* argv[])
     while (true)
     {
         update_metrics(config);
-        sleep(config.sampling_interval);
+        sleep((unsigned int)config.sampling_interval);
     }
 
     // Limpiar
@@ -168,8 +170,8 @@ Config load_config(const char* filename)
     fseek(file, 0, SEEK_END);
     long length = ftell(file);
     fseek(file, 0, SEEK_SET);
-    char* json_data = (char*)malloc(length + 1);
-    if (fread(json_data, 1, length, file) != length)
+    char* json_data = (char*)malloc((size_t)length + 1);
+    if (fread(json_data, 1, (size_t)length, file) != (size_t)length)
     {
         perror("Error al leer el archivo de configuración");
         free(json_data);
@@ -200,7 +202,7 @@ Config load_config(const char* filename)
     if (cJSON_IsArray(metrics))
     {
         config.metrics_count = cJSON_GetArraySize(metrics);
-        config.metrics = malloc(config.metrics_count * sizeof(char*));
+        config.metrics = malloc((size_t)config.metrics_count * sizeof(char*));
         for (int i = 0; i < config.metrics_count; i++)
         {
             cJSON* metric = cJSON_GetArrayItem(metrics, i);
