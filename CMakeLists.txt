@@ -10,10 +10,6 @@ set(CMAKE_C_STANDARD 17)
 # Incluye el directorio de encabezados
 include_directories(include)
 
-# Añade las bibliotecas prom y promhttp
-add_subdirectory(lib/prometheus-client-c/prom)
-add_subdirectory(lib/prometheus-client-c/promhttp)
-
 # Añade los archivos fuente al proyecto
 set(SOURCES
     src/metrics.c
@@ -26,6 +22,10 @@ add_executable(metrics ${SOURCES})
 
 #Especifica las biblioteca cjson
 find_package(cJSON REQUIRED)
+
+#Busca las bibliotecas externas
+find_library(PROM_LIB prom REQUIRED)
+find_library(PROMHTTP_LIB promhttp REQUIRED)
 
 # Link libraries
 target_link_libraries(metrics PRIVATE ${PROM_LIB} ${PROMHTTP_LIB} pthread cjson::cjson)
