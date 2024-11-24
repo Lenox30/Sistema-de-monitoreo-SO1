@@ -196,7 +196,7 @@ void* expose_metrics(void* arg)
 }
 
 // Inicializar mutex y métricas
-int init_metrics()
+int init_metrics(Config config)
 {
     // Inicializamos el mutex
     if (pthread_mutex_init(&lock, NULL) != 0)
@@ -286,28 +286,71 @@ int init_metrics()
     }
 
     // Registramos las métricas en el registro por defecto
-    if (prom_collector_registry_must_register_metric(cpu_usage_metric) != 0 ||
-        prom_collector_registry_must_register_metric(memory_usage_metric) != 0 ||
-        prom_collector_registry_must_register_metric(total_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(used_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(available_memory_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_read_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_write_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_io_in_progress_metric) != 0 ||
-        prom_collector_registry_must_register_metric(disk_io_time_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_bytes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_errors_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_errors_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_received_dropped_metric) != 0 ||
-        prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) != 0 ||
-        prom_collector_registry_must_register_metric(running_processes_metric) != 0 ||
-        prom_collector_registry_must_register_metric(context_switches_metric) != 0)
-        return EXIT_SUCCESS;
+    // Actualizar las métricas según la configuración
+    for (int i = 0; i < config.metrics_count; i++)
     {
-        fprintf(stderr, "Error al registrar las métricas\n");
-        return EXIT_FAILURE;
+        if (strcmp(config.metrics[i], "cpu_usage") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(cpu_usage_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar la métrica de uso de CPU\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "memory_usage") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(memory_usage_metric) == NULL ||
+                prom_collector_registry_must_register_metric(total_memory_metric) == NULL ||
+                prom_collector_registry_must_register_metric(used_memory_metric) == NULL ||
+                prom_collector_registry_must_register_metric(available_memory_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de memoria\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "disk_usage") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(disk_read_time_metric) == NULL ||
+                prom_collector_registry_must_register_metric(disk_write_time_metric) == NULL ||
+                prom_collector_registry_must_register_metric(disk_io_in_progress_metric) == NULL ||
+                prom_collector_registry_must_register_metric(disk_io_time_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de disco\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "network_usage") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(network_received_bytes_metric) == NULL ||
+                prom_collector_registry_must_register_metric(network_transmitted_bytes_metric) == NULL ||
+                prom_collector_registry_must_register_metric(network_received_errors_metric) == NULL ||
+                prom_collector_registry_must_register_metric(network_transmitted_errors_metric) == NULL ||
+                prom_collector_registry_must_register_metric(network_received_dropped_metric) == NULL ||
+                prom_collector_registry_must_register_metric(network_transmitted_dropped_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de red\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "running_processes") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(running_processes_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar la métrica de procesos en ejecución\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "context_switches") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(context_switches_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar la métrica de cambios de contexto\n");
+                return EXIT_FAILURE;
+            }
+        }
+        // Agregar más métricas según sea necesario
     }
+    return EXIT_SUCCESS;
 }
 
 // Destructor de mutex

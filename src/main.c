@@ -21,33 +21,9 @@
  */
 
 #include "expose_metrics.h"
+#include "globant.h"
 #include <cjson/cJSON.h> // Para manejar JSON
 #include <stdbool.h>
-
-/**
- * @brief Tamaño del buffer
- * Tamaño del buffer para leer archivos en el sistema de archivos.
- */
-#define BUFFER_SIZE 256
-
-/**
- * @brief Estructura de configuración
- *
- * Esta estructura contiene la configuración del sistema, incluyendo el intervalo de muestreo
- * y las métricas a monitorear.
- */
-#define intervalo 10
-
-/*
- * @brief estructura de configuracion
- *
- */
-typedef struct
-{
-    int sampling_interval; // Intervalo de muestreo
-    char** metrics;        // Nombres de las métricas
-    int metrics_count;     // Cantidad de métricas
-} Config;
 
 /**
  * @brief Actualiza las métricas del sistema según la configuración proporcionada.
@@ -78,7 +54,7 @@ int main(int argc, char* argv[])
     Config config = load_config("../config.json");
 
     // Inicializamos Metricas
-    init_metrics();
+    init_metrics(config);
     // Creamos un hilo para exponer las métricas vía HTTP
     pthread_t tid;
 
