@@ -113,18 +113,18 @@ double get_memory_fragmentation(void)
 {
     double total_mem = get_memory_total();
     double free_mem = get_memory_free();
-    double used_mem = get_memory_used();
 
-    if (total_mem <= 0 || free_mem < 0 || used_mem < 0)
+    if (total_mem <= 0 || free_mem < 0)
     {
         fprintf(stderr, "Error al obtener las métricas de memoria\n");
         return -1.0;
     }
 
-    // Calcular la tasa de fragmentación
-    double fragmentation = (free_mem / (total_mem - used_mem)) * 100.0;
+    // Calcular la tasa de fragmentación basada en memoria libre
+    double fragmentation = (free_mem / total_mem) * 100.0;
     return fragmentation;
 }
+
 
 // Función para obtener el uso de CPU
 double get_cpu_usage(void)
