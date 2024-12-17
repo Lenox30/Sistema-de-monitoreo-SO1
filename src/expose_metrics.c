@@ -19,6 +19,8 @@ static prom_gauge_t* total_memory_metric;
 static prom_gauge_t* available_memory_metric;
 /** Métrica de Prometheus para memoria usada en KB*/
 static prom_gauge_t* used_memory_metric;
+/** Métrica de Prometheus para la fragmentación de memoria */
+static prom_gauge_t* memory_fragmentation_metric;
 
 /** Métrica de Prometheus para el tiempo de lectura del disco */
 static prom_gauge_t* disk_read_time_metric;
@@ -78,13 +80,15 @@ int update_memory_gauge()
     double total = get_memory_total();
     double used = get_memory_used();
     double available = get_memory_free();
-    if (usage >= 0 && total >= 0 && used >= 0 && available >= 0)
+    double fragmentation = get_memory_fragmentation();
+    if (usage >= 0 && total >= 0 && used >= 0 && available >= 0 && fragmentation >= 0)
     {
         pthread_mutex_lock(&lock);
         prom_gauge_set(memory_usage_metric, usage, NULL);
         prom_gauge_set(total_memory_metric, total, NULL);
         prom_gauge_set(used_memory_metric, used, NULL);
         prom_gauge_set(available_memory_metric, available, NULL);
+        prom_gauge_set(memory_fragmentation_metric, fragmentation, NULL);
         pthread_mutex_unlock(&lock);
         return EXIT_SUCCESS;
     }
@@ -228,11 +232,12 @@ int init_metrics(Config config)
         return EXIT_FAILURE;
     }
 
-    // Creamos las métricas de memoria (total, usada, disponible)
+    // Creamos las métricas de memoria (total, usada, disponible, fragmentación)
     total_memory_metric = prom_gauge_new("total_memory_mb", "Memoria total en MB", 0, NULL);
     used_memory_metric = prom_gauge_new("used_memory_mb", "Memoria usada en MB", 0, NULL);
     available_memory_metric = prom_gauge_new("available_memory_mb", "Memoria disponible en MB", 0, NULL);
-    if (total_memory_metric == NULL || used_memory_metric == NULL || available_memory_metric == NULL)
+    memory_fragmentation_metric = prom_gauge_new("memory_fragmentation_percentage", "Porcentaje de fragmentación de memoria", 0, NULL);
+    if (total_memory_metric == NULL || used_memory_metric == NULL || available_memory_metric == NULL || memory_fragmentation_metric == NULL)
     {
         fprintf(stderr, "Error al crear la métricas de memoria\n");
         return EXIT_FAILURE;
@@ -302,7 +307,8 @@ int init_metrics(Config config)
             if (prom_collector_registry_must_register_metric(memory_usage_metric) == NULL ||
                 prom_collector_registry_must_register_metric(total_memory_metric) == NULL ||
                 prom_collector_registry_must_register_metric(used_memory_metric) == NULL ||
-                prom_collector_registry_must_register_metric(available_memory_metric) == NULL)
+                prom_collector_registry_must_register_metric(available_memory_metric) == NULL ||
+                prom_collector_registry_must_register_metric(memory_fragmentation_metric) == NULL)
             {
                 fprintf(stderr, "Error al registrar las métricas de memoria\n");
                 return EXIT_FAILURE;
@@ -343,10 +349,10 @@ int init_metrics(Config config)
         else if (strcmp(config.metrics[i], "context_switches") == 0)
         {
             if (prom_collector_registry_must_register_metric(context_switches_metric) == NULL)
-            {
+    {
                 fprintf(stderr, "Error al registrar la métrica de cambios de contexto\n");
-                return EXIT_FAILURE;
-            }
+        return EXIT_FAILURE;
+    }
         }
         // Agregar más métricas según sea necesario
     }

@@ -106,6 +106,15 @@ double get_memory_free(void);
 double get_memory_used(void);
 
 /**
+ * @brief Obtiene la tasa de fragmentación de memoria.
+ *
+ * Pide los valores de memoria total, libre y usada, luego calcula la tasa de fragmentación.
+ *
+ * @return Tasa de fragmentación de memoria como porcentaje (0.0 a 100.0), o -1.0 en caso de error.
+ */
+double get_memory_fragmentation(void);
+
+/**
  * @brief Obtiene el porcentaje de uso de CPU desde /proc/stat.
  *
  * Lee los tiempos de CPU desde /proc/stat y calcula el porcentaje de uso de CPU
