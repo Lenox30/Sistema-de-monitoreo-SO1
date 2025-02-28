@@ -12,7 +12,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 set(CMAKE_C_STANDARD 17)
 
 # Incluir directorios de encabezados
-include_directories(include)
 include_directories(include) # Encabezados del proyecto principal
 
 # Añadir los archivos fuente al proyecto
@@ -31,7 +30,7 @@ find_library(PROM_LIB prom REQUIRED)
 find_library(PROMHTTP_LIB promhttp REQUIRED)
 
 # Enlazar las bibliotecas necesarias
-target_link_libraries(metrics PRIVATE ${PROM_LIB} ${PROMHTTP_LIB} pthread cjson::cjson memory)
+target_link_libraries(metrics PRIVATE ${PROM_LIB} ${PROMHTTP_LIB} pthread cjson::cjson)
 
 # Configurar el directorio de salida del ejecutable
 set_target_properties(metrics PROPERTIES
