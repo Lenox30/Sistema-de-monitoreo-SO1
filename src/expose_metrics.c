@@ -4,6 +4,8 @@
  */
 
 #include "expose_metrics.h"
+#include "metrics.h"
+
 
 /** Mutex para sincronización de hilos */
 pthread_mutex_t lock;
@@ -46,11 +48,46 @@ static prom_gauge_t* network_transmitted_dropped_metric;
 /** Estructura para almacenar las métricas de red */
 NetworkMetrics metrics_network;
 
+MemoryMetrics First;
+MemoryMetrics Best;
+MemoryMetrics Worst;
+
+
 /** Métrica de Prometheus para el número de procesos en ejecución */
 static prom_gauge_t* running_processes_metric;
 
 /** Métrica de Prometheus para la cantidad de cambios de contexto */
 static prom_gauge_t* context_switches_metric;
+
+/** Métrica de Prometheus para First Fit */
+static prom_gauge_t* First_Fit_Iteration_metric;
+static prom_gauge_t* First_Fit_Time_metric;
+static prom_gauge_t* First_Fit_Total_Allocated_metric;
+static prom_gauge_t* First_Fit_Freed_Blocks_metric;
+static prom_gauge_t* First_Fit_Free_Blocks_metric;
+static prom_gauge_t* First_Fit_Free_Size_metric;
+static prom_gauge_t* First_Fit_Fragmentation_metric;
+static prom_gauge_t* First_Fit_External_Fragmentation_metric;
+
+/** Métrica de Prometheus para Best Fit */
+static prom_gauge_t* Best_Fit_Iteration_metric;
+static prom_gauge_t* Best_Fit_Time_metric;
+static prom_gauge_t* Best_Fit_Total_Allocated_metric;
+static prom_gauge_t* Best_Fit_Freed_Blocks_metric;
+static prom_gauge_t* Best_Fit_Free_Blocks_metric;
+static prom_gauge_t* Best_Fit_Free_Size_metric;
+static prom_gauge_t* Best_Fit_Fragmentation_metric;
+static prom_gauge_t* Best_Fit_External_Fragmentation_metric;
+
+/** Métrica de Prometheus para Worst Fit */
+static prom_gauge_t* Worst_Fit_Iteration_metric;
+static prom_gauge_t* Worst_Fit_Time_metric;
+static prom_gauge_t* Worst_Fit_Total_Allocated_metric;
+static prom_gauge_t* Worst_Fit_Freed_Blocks_metric;
+static prom_gauge_t* Worst_Fit_Free_Blocks_metric;
+static prom_gauge_t* Worst_Fit_Free_Size_metric;
+static prom_gauge_t* Worst_Fit_Fragmentation_metric;
+static prom_gauge_t* Worst_Fit_External_Fragmentation_metric;
 
 // Actualiza la métrica de uso de CPU
 int update_cpu_gauge()
@@ -70,6 +107,7 @@ int update_cpu_gauge()
         return EXIT_FAILURE;
     }
 }
+
 
 // Actualiza las métricas de memoria
 int update_memory_gauge()
@@ -105,7 +143,7 @@ void update_disk_gauge()
         pthread_mutex_lock(&lock);
         prom_gauge_set(disk_read_time_metric, (double)metrics_disk.read_time_ms, NULL);
         prom_gauge_set(disk_write_time_metric, (double)metrics_disk.write_time_ms, NULL);
-        prom_gauge_set(disk_io_in_progress_metric, (double)metrics_disk.io_in_progress, NULL);
+        prom_gauge_set(disk_io_in_progress_metric, (double)(size_t)metrics_disk.io_in_progress, NULL);
         prom_gauge_set(disk_io_time_metric, (double)metrics_disk.io_time_ms, NULL);
         pthread_mutex_unlock(&lock);
     }
@@ -165,6 +203,74 @@ void update_context_switches_gauge()
     else
     {
         fprintf(stderr, "Error al obtener la cantidad de cambios de contexto\n");
+    }
+}
+
+ void update_First_Fit_gauge()
+{
+    int TodoCorrecto = get_First_Fit(&First);
+    if (TodoCorrecto >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(First_Fit_Iteration_metric, First.iterations, NULL); //Se actualiza la métrica de iteraciones de la política First Fit
+        prom_gauge_set(First_Fit_Time_metric, First.time_taken, NULL); //Se actualiza la métrica de tiempo de ejecución de la política First Fit
+        prom_gauge_set(First_Fit_Total_Allocated_metric, (double)First.total_allocated, NULL); //Se actualiza la métrica de memoria total asignada de la política First Fit
+        prom_gauge_set(First_Fit_Freed_Blocks_metric, (double)First.freed_blocks, NULL); //Se actualiza la métrica de bloques liberados de la política First Fit
+        prom_gauge_set(First_Fit_Free_Blocks_metric, (double)First.free_blocks, NULL); //Se actualiza la métrica de bloques libres de la política First Fit
+        prom_gauge_set(First_Fit_Free_Size_metric, (double)First.free_size, NULL); //Se actualiza la métrica de tamaño total de moemoria libres de la política First Fit
+        prom_gauge_set(First_Fit_Fragmentation_metric, First.avg_fragmentation, NULL); //Se actualiza la métrica de fragmentación promedio
+        prom_gauge_set(First_Fit_External_Fragmentation_metric, First.external_fragmentation, NULL); //Se actualiza la métrica de fragmentación externa
+
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener la política de asignación de memoria\n");
+    }
+}
+
+void update_Best_Fit_gauge()
+{
+    int TodoCorrecto = get_Best_Fit(&Best);
+
+    if (TodoCorrecto >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(Best_Fit_Iteration_metric, Best.iterations, NULL); //Se actualiza la métrica de iteraciones de la política Best Fit
+        prom_gauge_set(Best_Fit_Time_metric, Best.time_taken, NULL); //Se actualiza la métrica de tiempo de ejecución de la política Best Fit
+        prom_gauge_set(Best_Fit_Total_Allocated_metric, (double)Best.total_allocated, NULL); //Se actualiza la métrica de memoria total asignada de la política Best Fit
+        prom_gauge_set(Best_Fit_Freed_Blocks_metric, (double)Best.freed_blocks, NULL); //Se actualiza la métrica de bloques liberados de la política Best Fit
+        prom_gauge_set(Best_Fit_Free_Blocks_metric, (double)Best.free_blocks, NULL); //Se actualiza la métrica de bloques libres de la política Best Fit
+        prom_gauge_set(Best_Fit_Free_Size_metric, (double)Best.free_size, NULL); //Se actualiza la métrica de tamaño total de moemoria libres de la política Best Fit
+        prom_gauge_set(Best_Fit_Fragmentation_metric, Best.avg_fragmentation, NULL); //Se actualiza la métrica de fragmentación promedio
+        prom_gauge_set(Best_Fit_External_Fragmentation_metric, Best.external_fragmentation, NULL); //Se actualiza la métrica de fragmentación externa
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener la política de asignación de memoria\n");
+    }
+}
+
+void update_Worst_Fit_gauge()
+{
+    int TodoCorrecto = get_Worst_Fit(&Worst);
+    if (TodoCorrecto >= 0)
+    {
+        pthread_mutex_lock(&lock);
+        prom_gauge_set(Worst_Fit_Iteration_metric, Worst.iterations, NULL); //Se actualiza la métrica de iteraciones de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Time_metric, Worst.time_taken, NULL); //Se actualiza la métrica de tiempo de ejecución de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Total_Allocated_metric, (double)Worst.total_allocated, NULL); //Se actualiza la métrica de memoria total asignada de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Freed_Blocks_metric, (double)Worst.freed_blocks, NULL); //Se actualiza la métrica de bloques liberados de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Free_Blocks_metric, (double)Worst.free_blocks, NULL); //Se actualiza la métrica de bloques libres de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Free_Size_metric, (double)Worst.free_size, NULL); //Se actualiza la métrica de tamaño total de moemoria libres de la política Worst Fit
+        prom_gauge_set(Worst_Fit_Fragmentation_metric, Worst.avg_fragmentation, NULL); //Se actualiza la métrica de fragmentación promedio
+        prom_gauge_set(Worst_Fit_External_Fragmentation_metric, Worst.external_fragmentation, NULL); //Se actualiza la métrica de fragmentación externa
+        pthread_mutex_unlock(&lock);
+    }
+    else
+    {
+        fprintf(stderr, "Error al obtener la política de asignación de memoria\n");
     }
 }
 
@@ -284,6 +390,35 @@ int init_metrics(Config config)
         fprintf(stderr, "Error al crear la métrica de cambios de contexto\n");
         return EXIT_FAILURE;
     }
+    //Creamos la métrica para la política de asignación de memoria First Fit
+    First_Fit_Iteration_metric = prom_gauge_new("First_Fit_Iteration", "Iteraciones de la política First Fit", 0, NULL);
+    First_Fit_Time_metric = prom_gauge_new("First_Fit_Time", "Tiempo de ejecución de la política First Fit", 0, NULL);
+    First_Fit_Total_Allocated_metric = prom_gauge_new("First_Fit_Total_Allocated", "Memoria total asignada de la política First Fit", 0, NULL);
+    First_Fit_Freed_Blocks_metric = prom_gauge_new("First_Fit_Freed_Blocks", "Bloques liberados de la política First Fit", 0, NULL);
+    First_Fit_Free_Blocks_metric = prom_gauge_new("First_Fit_Free_Blocks", "Bloques libres de la política First Fit", 0, NULL);
+    First_Fit_Free_Size_metric = prom_gauge_new("First_Fit_Free_Size", "Tamaño total de memoria libre de la política First Fit", 0, NULL);
+    First_Fit_Fragmentation_metric = prom_gauge_new("First_Fit_Fragmentation", "Fragmentación promedio de la política First Fit", 0, NULL);
+    First_Fit_External_Fragmentation_metric = prom_gauge_new("First_Fit_External_Fragmentation", "Fragmentación externa de la política First Fit", 0, NULL);
+
+    // Creamos la métrica para la política de asignación de memoria Best Fit
+    Best_Fit_Iteration_metric = prom_gauge_new("Best_Fit_Iteration", "Iteraciones de la política Best Fit", 0, NULL);
+    Best_Fit_Time_metric = prom_gauge_new("Best_Fit_Time", "Tiempo de ejecución de la política Best Fit", 0, NULL);
+    Best_Fit_Total_Allocated_metric = prom_gauge_new("Best_Fit_Total_Allocated", "Memoria total asignada de la política Best Fit", 0, NULL);
+    Best_Fit_Freed_Blocks_metric = prom_gauge_new("Best_Fit_Freed_Blocks", "Bloques liberados de la política Best Fit", 0, NULL);
+    Best_Fit_Free_Blocks_metric = prom_gauge_new("Best_Fit_Free_Blocks", "Bloques libres de la política Best Fit", 0, NULL);
+    Best_Fit_Free_Size_metric = prom_gauge_new("Best_Fit_Free_Size", "Tamaño total de memoria libre de la política Best Fit", 0, NULL);
+    Best_Fit_Fragmentation_metric = prom_gauge_new("Best_Fit_Fragmentation", "Fragmentación promedio de la política Best Fit", 0, NULL);
+    Best_Fit_External_Fragmentation_metric = prom_gauge_new("Best_Fit_External_Fragmentation", "Fragmentación externa de la política Best Fit", 0, NULL);
+
+    // Creamos la métrica para la política de asignación de memoria Worst Fit
+    Worst_Fit_Iteration_metric = prom_gauge_new("Worst_Fit_Iteration", "Iteraciones de la política Worst Fit", 0, NULL);
+    Worst_Fit_Time_metric = prom_gauge_new("Worst_Fit_Time", "Tiempo de ejecución de la política Worst Fit", 0, NULL);
+    Worst_Fit_Total_Allocated_metric = prom_gauge_new("Worst_Fit_Total_Allocated", "Memoria total asignada de la política Worst Fit", 0, NULL);
+    Worst_Fit_Freed_Blocks_metric = prom_gauge_new("Worst_Fit_Freed_Blocks", "Bloques liberados de la política Worst Fit", 0, NULL);
+    Worst_Fit_Free_Blocks_metric = prom_gauge_new("Worst_Fit_Free_Blocks", "Bloques libres de la política Worst Fit", 0, NULL);
+    Worst_Fit_Free_Size_metric = prom_gauge_new("Worst_Fit_Free_Size", "Tamaño total de memoria libre de la política Worst Fit", 0, NULL);
+    Worst_Fit_Fragmentation_metric = prom_gauge_new("Worst_Fit_Fragmentation", "Fragmentación promedio de la política Worst Fit", 0, NULL);
+    Worst_Fit_External_Fragmentation_metric = prom_gauge_new("Worst_Fit_External_Fragmentation", "Fragmentación externa de la política Worst Fit", 0, NULL);
 
     // Registramos las métricas en el registro por defecto
     // Actualizar las métricas según la configuración
@@ -348,7 +483,58 @@ int init_metrics(Config config)
                 return EXIT_FAILURE;
             }
         }
+        else if (strcmp(config.metrics[i], "First_Fit") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(First_Fit_Iteration_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Time_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Total_Allocated_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Freed_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Free_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Free_Size_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_Fragmentation_metric) == NULL ||
+                prom_collector_registry_must_register_metric(First_Fit_External_Fragmentation_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de la política First Fit\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "Best_Fit") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(Best_Fit_Iteration_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Time_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Total_Allocated_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Freed_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Free_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Free_Size_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_Fragmentation_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Best_Fit_External_Fragmentation_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de la política Best Fit\n");
+                return EXIT_FAILURE;
+            }
+        }
+        else if (strcmp(config.metrics[i], "Worst_Fit") == 0)
+        {
+            if (prom_collector_registry_must_register_metric(Worst_Fit_Iteration_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Time_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Total_Allocated_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Freed_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Free_Blocks_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Free_Size_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_Fragmentation_metric) == NULL ||
+                prom_collector_registry_must_register_metric(Worst_Fit_External_Fragmentation_metric) == NULL)
+            {
+                fprintf(stderr, "Error al registrar las métricas de la política Worst Fit\n");
+                return EXIT_FAILURE;
+            }
+        }
         // Agregar más métricas según sea necesario
+    }
+        // Verificación de la creación de las métricas
+    if (!cpu_usage_metric || !memory_usage_metric || !total_memory_metric || !used_memory_metric || !available_memory_metric)
+    {
+        fprintf(stderr, "Error al crear las métricas de Prometheus\n");
+        return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
 }

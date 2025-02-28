@@ -1,43 +1,48 @@
-# Especifica la versión mínima de CMake
-cmake_minimum_required(VERSION 3.28.3)
+cmake_minimum_required(VERSION 3.10)
 
 # Nombre del proyecto
 project(MetricsProject)
 
-# Establece el estándar de C para tu proyecto
+# Configuración de compilación
+set(CMAKE_BUILD_TYPE Debug)
+
+# Habilitar depuración con símbolos completos y sin optimización
+set(CMAKE_C_FLAGS_DEBUG "-g -O0 -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 set(CMAKE_C_STANDARD 17)
 
-# Incluye el directorio de encabezados
+# Incluir directorios de encabezados
 include_directories(include)
+include_directories(include) # Encabezados del proyecto principal
 
-# Añade los archivos fuente al proyecto
+# Añadir los archivos fuente al proyecto
 set(SOURCES
     src/metrics.c
     src/main.c
     src/expose_metrics.c
 )
 
-# Crea el ejecutable
+# Crear el ejecutable
 add_executable(metrics ${SOURCES})
 
-#Especifica las biblioteca cjson
+# Especificar bibliotecas externas
 find_package(cJSON REQUIRED)
-
-#Busca las bibliotecas externas
 find_library(PROM_LIB prom REQUIRED)
 find_library(PROMHTTP_LIB promhttp REQUIRED)
 
-# Link libraries
-target_link_libraries(metrics PRIVATE ${PROM_LIB} ${PROMHTTP_LIB} pthread cjson::cjson)
+# Enlazar las bibliotecas necesarias
+target_link_libraries(metrics PRIVATE ${PROM_LIB} ${PROMHTTP_LIB} pthread cjson::cjson memory)
 
-# Establece el directorio de salida para el ejecutable
+# Configurar el directorio de salida del ejecutable
 set_target_properties(metrics PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-)  
+)
 
-# Mensaje recordatorio para la biblioteca compartida
+# Habilitar depuración en GDB/LLDB
+set_target_properties(metrics PROPERTIES
+    COMPILE_FLAGS "-ggdb"
+)
+
+# Mensaje de recordatorio para LD_LIBRARY_PATH
 message(STATUS "Para ejecutar, asegúrate de tener configurado LD_LIBRARY_PATH:")
 message(STATUS "export LD_LIBRARY_PATH=/usr/local/lib:\$LD_LIBRARY_PATH")
-
-
-

@@ -52,6 +52,21 @@ void update_proccess_gauge(void);
 void update_context_switches_gauge(void);
 
 /**
+ * @brief Actualiza la métrica de First Fit.
+ */
+void update_First_Fit_gauge(void);
+
+/**
+ * @brief Actualiza la métrica de Best Fit.
+ */
+void update_Best_Fit_gauge(void);
+
+/**
+ * @brief Actualiza la métrica de Worst Fit.
+ */
+void update_Worst_Fit_gauge(void);
+
+/**
  * @brief Función del hilo para exponer las métricas vía HTTP en el puerto 8000.
  * @param arg Argumento no utilizado.
  * @return NULL
