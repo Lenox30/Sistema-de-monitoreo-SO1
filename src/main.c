@@ -20,12 +20,10 @@
  * @see expose_metrics.h
  */
 
-#include "expose_metrics.h"
-#include "globant.h"
-#include <cjson/cJSON.h> // Para manejar JSON
-#include <stdbool.h>
-
-#define FIFO_PATH "/tmp/my_fifo" // Define the FIFO path
+#include "expose_metrics.h" // Para exponer las métricas vía HTTP
+#include "globant.h"        // Para inicializar las métricas
+#include <cjson/cJSON.h>    // Para manejar JSON
+#include <stdbool.h>        // Para usar valores booleanos
 
 /**
  * @brief Actualiza las métricas del sistema según la configuración proporcionada.
@@ -89,8 +87,6 @@ int main(int argc, char* argv[])
     pthread_join(tid, NULL);
     pthread_join(update_tid, NULL);
 
-
-
     return EXIT_SUCCESS;
 }
 
@@ -140,7 +136,7 @@ void update_metrics(Config config)
         {
             update_Worst_Fit_gauge();
         }
-        //Agregar más métricas según sea necesario
+        // Agregar más métricas según sea necesario
     }
 }
 
@@ -250,10 +246,14 @@ Config load_config(const char* filename)
  *
  * @param config Estructura de configuración a limpiar.
  */
-void clean_config(Config* config) {
-    if (config->metrics != NULL) {
-        for (int i = 0; i < config->metrics_count; i++) {
-            if (config->metrics[i] != NULL) { // Validar antes de liberar
+void clean_config(Config* config)
+{
+    if (config->metrics != NULL)
+    {
+        for (int i = 0; i < config->metrics_count; i++)
+        {
+            if (config->metrics[i] != NULL)
+            { // Validar antes de liberar
                 free(config->metrics[i]);
                 config->metrics[i] = NULL; // Evitar dobles liberaciones
             }

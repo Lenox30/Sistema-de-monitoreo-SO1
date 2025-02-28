@@ -6,14 +6,16 @@
  * uso de CPU, métricas de disco, métricas de red, procesos en ejecución y cambios de contexto.
  */
 
-#include "metrics.h"
-#include <fcntl.h>
+#include "metrics.h" // Incluir el archivo de cabecera de métricas
+#include <fcntl.h>   // Incluir la biblioteca de funciones de control de archivos
 
-#define FIFO_PATH "/tmp/my_fifo" // Define the FIFO path
-
-// Creamos una estructura para cada métrica de politica de asignación de memoria
+/* Variables globales para almacenar las métricas de las políticas de asignación de memoria */
 MemoryMetrics First_Fit_Metrics;
+
+/* Variables globales para almacenar las métricas de las políticas de asignación de memoria */
 MemoryMetrics Best_Fit_Metrics;
+
+/* Variables globales para almacenar las métricas de las políticas de asignación de memoria */
 MemoryMetrics Worst_Fit_Metrics;
 
 // Función para obtener la memoria total en MB
@@ -132,7 +134,6 @@ double get_memory_fragmentation(void)
     double fragmentation = (free_mem / total_mem) * 100.0;
     return fragmentation;
 }
-
 
 // Función para obtener el uso de CPU
 double get_cpu_usage(void)
@@ -387,6 +388,7 @@ long long get_context_switches(void)
     return (long long)context_switches;
 }
 
+// Función para obtener las métricas de la política de asignación de memoria First Fit
 int get_First_Fit(MemoryMetrics* First)
 {
     ejecutar_memory(1);
@@ -394,7 +396,7 @@ int get_First_Fit(MemoryMetrics* First)
     First->avg_fragmentation = First_Fit_Metrics.avg_fragmentation;
     First->external_fragmentation = First_Fit_Metrics.external_fragmentation;
     First->free_blocks = First_Fit_Metrics.free_blocks;
-    First->free_size = First_Fit_Metrics.free_size;  
+    First->free_size = First_Fit_Metrics.free_size;
     First->freed_blocks = First_Fit_Metrics.freed_blocks;
     First->iterations = First_Fit_Metrics.iterations;
     First->time_taken = First_Fit_Metrics.time_taken;
@@ -403,6 +405,7 @@ int get_First_Fit(MemoryMetrics* First)
     return 0;
 }
 
+// Función para obtener las métricas de la política de asignación de memoria Best Fit
 int get_Best_Fit(MemoryMetrics* Best)
 {
     ejecutar_memory(2);
@@ -419,6 +422,7 @@ int get_Best_Fit(MemoryMetrics* Best)
     return 0;
 }
 
+// Función para obtener las métricas de la política de asignación de memoria Worst Fit
 int get_Worst_Fit(MemoryMetrics* Worst)
 {
     ejecutar_memory(3);
@@ -435,6 +439,7 @@ int get_Worst_Fit(MemoryMetrics* Worst)
     return 0;
 }
 
+// Función para leer las métricas de memoria desde un FIFO
 void read_memory_metrics()
 {
     int fd = open(FIFO_PATH, O_RDONLY);
@@ -457,7 +462,7 @@ void read_memory_metrics()
     }
 
     if (!sscanf(buffer, "%s %d %lf %zu %d %d %zu %lf %lf", policy_name, &iterations, &time_taken, &total_allocated,
-               &freed_blocks, &free_blocks, &free_size, &avg_fragmentation, &external_fragmentation) == 9)
+                &freed_blocks, &free_blocks, &free_size, &avg_fragmentation, &external_fragmentation) == 9)
     {
         printf("Error al leer los datos del FIFO\n");
     }
@@ -499,22 +504,31 @@ void read_memory_metrics()
     close(fd);
 }
 
-void ejecutar_memory(int policy) {
+// Función para ejecutar el programa "Memory_Project" con la política de asignación de memoria especificada
+void ejecutar_memory(int policy)
+{
     pid_t pid = fork();
 
-    if (pid == -1) {
+    if (pid == -1)
+    {
         perror("Error al hacer fork");
         return;
     }
 
-    if (pid == 0) { 
+    if (pid == 0)
+    {
         // Proceso hijo: ejecutar "Memory_Project" con el argumento correcto
-        if (policy == 1) {
-            execl("bin/Memory_Project", "Memory_Project", "FIRST", (char *)NULL);
-        } else if (policy == 2) {
-            execl("bin/Memory_Project", "Memory_Project", "BEST", (char *)NULL);
-        } else if (policy == 3) {
-            execl("bin/Memory_Project", "Memory_Project", "WORST", (char *)NULL);
+        if (policy == 1)
+        {
+            execl("bin/Memory_Project", "Memory_Project", "FIRST", (char*)NULL);
+        }
+        else if (policy == 2)
+        {
+            execl("bin/Memory_Project", "Memory_Project", "BEST", (char*)NULL);
+        }
+        else if (policy == 3)
+        {
+            execl("bin/Memory_Project", "Memory_Project", "WORST", (char*)NULL);
         }
         perror("Error al ejecutar memory");
         exit(EXIT_FAILURE);

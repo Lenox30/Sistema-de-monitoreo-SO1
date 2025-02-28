@@ -3,7 +3,7 @@
  * @brief Funciones para obtener el uso de CPU y memoria desde el sistema de archivos /proc.
  */
 
-#ifndef METRICS_H   // Directiva para evitar inclusiones múltiples
+#ifndef METRICS_H // Directiva para evitar inclusiones múltiples
 #define METRICS_H
 
 #include "memory_metrics.h"
@@ -31,6 +31,11 @@
  * @brief Política de asignación de memoria
  */
 #define WORST_FIT 2
+
+/**
+ * @brief Ruta del FIFO
+ */
+#define FIFO_PATH "/tmp/my_fifo" // Define the FIFO path
 
 /**
  * @brief Estructura para almacenar las métricas del disco.
@@ -62,14 +67,14 @@ typedef struct
  */
 typedef struct
 {
-    char policy_name[20];    /**< Nombre de la política de asignación de memoria */
-    int iterations;          /**< Número de iteraciones */
-    float time_taken;        /**< Tiempo de ejecución */
-    size_t total_allocated;  /**< Memoria total asignada */
-    int freed_blocks;        /**< Bloques liberados */
-    int free_blocks;         /**< Bloques libres */
-    size_t free_size;        /**< Tamaño total de memoria libre */
-    float avg_fragmentation; /**< Fragmentación promedio */
+    char policy_name[20];         /**< Nombre de la política de asignación de memoria */
+    int iterations;               /**< Número de iteraciones */
+    float time_taken;             /**< Tiempo de ejecución */
+    size_t total_allocated;       /**< Memoria total asignada */
+    int freed_blocks;             /**< Bloques liberados */
+    int free_blocks;              /**< Bloques libres */
+    size_t free_size;             /**< Tamaño total de memoria libre */
+    float avg_fragmentation;      /**< Fragmentación promedio */
     float external_fragmentation; /**< Fragmentación externa */
 } MemoryMetrics;
 
@@ -173,7 +178,7 @@ int get_disk_metrics(DiskMetrics*);
  *
  * Evalúa la política de asignación de memoria First Fit y retorna los resultados.
  */
-int get_First_Fit(MemoryMetrics* );
+int get_First_Fit(MemoryMetrics*);
 
 /**
  * @brief Obtiene las métricas de la política de asignación de memoria Best Fit.
@@ -189,8 +194,24 @@ int get_Best_Fit(MemoryMetrics*);
  */
 int get_Worst_Fit(MemoryMetrics*);
 
+/**
+ * @brief Obtiene las métricas de la política de asignación de memoria.
+ *
+ * Evalúa la política de asignación de memoria y retorna los resultados.
+ *
+ * @param policy Política de asignación de memoria (FIRST_FIT, BEST_FIT o WORST_FIT).
+ * @param metrics Estructura para almacenar los resultados de la evaluación.
+ * @return 0 en caso de éxito, -1 en caso de error.
+ */
 void read_memory_metrics(void);
 
+/**
+ * @brief Ejecuta la política de asignación de memoria.
+ *
+ * Ejecuta la política de asignación de memoria seleccionada.
+ *
+ * @param policy Política de asignación de memoria (FIRST_FIT, BEST_FIT o WORST_FIT).
+ */
 void ejecutar_memory(int);
 
 #endif // METRICS_H
