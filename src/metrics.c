@@ -7,6 +7,14 @@
  */
 
 #include "metrics.h"
+#include <fcntl.h>
+
+#define FIFO_PATH "/tmp/my_fifo" // Define the FIFO path
+
+// Creamos una estructura para cada métrica de politica de asignación de memoria
+MemoryMetrics First_Fit_Metrics;
+MemoryMetrics Best_Fit_Metrics;
+MemoryMetrics Worst_Fit_Metrics;
 
 // Función para obtener la memoria total en MB
 double get_memory_total(void)
@@ -377,4 +385,138 @@ long long get_context_switches(void)
 
     fclose(fp);
     return (long long)context_switches;
+}
+
+int get_First_Fit(MemoryMetrics* First)
+{
+    ejecutar_memory(1);
+    read_memory_metrics();
+    First->avg_fragmentation = First_Fit_Metrics.avg_fragmentation;
+    First->external_fragmentation = First_Fit_Metrics.external_fragmentation;
+    First->free_blocks = First_Fit_Metrics.free_blocks;
+    First->free_size = First_Fit_Metrics.free_size;  
+    First->freed_blocks = First_Fit_Metrics.freed_blocks;
+    First->iterations = First_Fit_Metrics.iterations;
+    First->time_taken = First_Fit_Metrics.time_taken;
+    First->total_allocated = First_Fit_Metrics.total_allocated;
+
+    return 0;
+}
+
+int get_Best_Fit(MemoryMetrics* Best)
+{
+    ejecutar_memory(2);
+    read_memory_metrics();
+    Best->avg_fragmentation = Best_Fit_Metrics.avg_fragmentation;
+    Best->external_fragmentation = Best_Fit_Metrics.external_fragmentation;
+    Best->free_blocks = Best_Fit_Metrics.free_blocks;
+    Best->free_size = Best_Fit_Metrics.free_size;
+    Best->freed_blocks = Best_Fit_Metrics.freed_blocks;
+    Best->iterations = Best_Fit_Metrics.iterations;
+    Best->time_taken = Best_Fit_Metrics.time_taken;
+    Best->total_allocated = Best_Fit_Metrics.total_allocated;
+
+    return 0;
+}
+
+int get_Worst_Fit(MemoryMetrics* Worst)
+{
+    ejecutar_memory(3);
+    read_memory_metrics();
+    Worst->avg_fragmentation = Worst_Fit_Metrics.avg_fragmentation;
+    Worst->external_fragmentation = Worst_Fit_Metrics.external_fragmentation;
+    Worst->free_blocks = Worst_Fit_Metrics.free_blocks;
+    Worst->free_size = Worst_Fit_Metrics.free_size;
+    Worst->freed_blocks = Worst_Fit_Metrics.freed_blocks;
+    Worst->iterations = Worst_Fit_Metrics.iterations;
+    Worst->time_taken = Worst_Fit_Metrics.time_taken;
+    Worst->total_allocated = Worst_Fit_Metrics.total_allocated;
+
+    return 0;
+}
+
+void read_memory_metrics()
+{
+    int fd = open(FIFO_PATH, O_RDONLY);
+    if (fd == -1)
+    {
+        perror("Error al abrir FIFO para lectura");
+        return;
+    }
+
+    char buffer[256];
+    char policy_name[20];
+    int iterations, freed_blocks, free_blocks;
+    double time_taken, avg_fragmentation, external_fragmentation;
+    size_t total_allocated, free_size;
+
+    ssize_t bytes_read;
+    while ((bytes_read = read(fd, buffer, sizeof(buffer) - 1)) > 0)
+    {
+        buffer[bytes_read] = '\0';
+    }
+
+    if (!sscanf(buffer, "%s %d %lf %zu %d %d %zu %lf %lf", policy_name, &iterations, &time_taken, &total_allocated,
+               &freed_blocks, &free_blocks, &free_size, &avg_fragmentation, &external_fragmentation) == 9)
+    {
+        printf("Error al leer los datos del FIFO\n");
+    }
+
+    if (strcmp(policy_name, "First_Fit") == 0)
+    {
+        First_Fit_Metrics.iterations = iterations;
+        First_Fit_Metrics.time_taken = time_taken;
+        First_Fit_Metrics.total_allocated = total_allocated;
+        First_Fit_Metrics.freed_blocks = freed_blocks;
+        First_Fit_Metrics.free_blocks = free_blocks;
+        First_Fit_Metrics.free_size = free_size;
+        First_Fit_Metrics.avg_fragmentation = avg_fragmentation;
+        First_Fit_Metrics.external_fragmentation = external_fragmentation;
+    }
+    else if (strcmp(policy_name, "Best_Fit") == 0)
+    {
+        Best_Fit_Metrics.iterations = iterations;
+        Best_Fit_Metrics.time_taken = time_taken;
+        Best_Fit_Metrics.total_allocated = total_allocated;
+        Best_Fit_Metrics.freed_blocks = freed_blocks;
+        Best_Fit_Metrics.free_blocks = free_blocks;
+        Best_Fit_Metrics.free_size = free_size;
+        Best_Fit_Metrics.avg_fragmentation = avg_fragmentation;
+        Best_Fit_Metrics.external_fragmentation = external_fragmentation;
+    }
+    else if (strcmp(policy_name, "Worst_Fit") == 0)
+    {
+        Worst_Fit_Metrics.iterations = iterations;
+        Worst_Fit_Metrics.time_taken = time_taken;
+        Worst_Fit_Metrics.total_allocated = total_allocated;
+        Worst_Fit_Metrics.freed_blocks = freed_blocks;
+        Worst_Fit_Metrics.free_blocks = free_blocks;
+        Worst_Fit_Metrics.free_size = free_size;
+        Worst_Fit_Metrics.avg_fragmentation = avg_fragmentation;
+        Worst_Fit_Metrics.external_fragmentation = external_fragmentation;
+    }
+
+    close(fd);
+}
+
+void ejecutar_memory(int policy) {
+    pid_t pid = fork();
+
+    if (pid == -1) {
+        perror("Error al hacer fork");
+        return;
+    }
+
+    if (pid == 0) { 
+        // Proceso hijo: ejecutar "Memory_Project" con el argumento correcto
+        if (policy == 1) {
+            execl("bin/Memory_Project", "Memory_Project", "FIRST", (char *)NULL);
+        } else if (policy == 2) {
+            execl("bin/Memory_Project", "Memory_Project", "BEST", (char *)NULL);
+        } else if (policy == 3) {
+            execl("bin/Memory_Project", "Memory_Project", "WORST", (char *)NULL);
+        }
+        perror("Error al ejecutar memory");
+        exit(EXIT_FAILURE);
+    }
 }

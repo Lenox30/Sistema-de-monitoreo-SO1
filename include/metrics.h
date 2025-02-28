@@ -3,16 +3,34 @@
  * @brief Funciones para obtener el uso de CPU y memoria desde el sistema de archivos /proc.
  */
 
+#ifndef METRICS_H   // Directiva para evitar inclusiones múltiples
+#define METRICS_H
+
+#include "memory_metrics.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 /**
- * @brief Tamaño del buffer
- * Tamaño del buffer
+ * @brief Tamaño del buffer
  */
 #define BUFFER_SIZE 256 // Tamaño del buffer
+
+/**
+ * @brief Política de asignación de memoria
+ */
+#define FIRST_FIT 0
+
+/**
+ * @brief Política de asignación de memoria
+ */
+#define BEST_FIT 1
+
+/**
+ * @brief Política de asignación de memoria
+ */
+#define WORST_FIT 2
 
 /**
  * @brief Estructura para almacenar las métricas del disco.
@@ -38,6 +56,22 @@ typedef struct
     unsigned long receive_dropped;  /**< Paquetes recibidos descartados */
     unsigned long transmit_dropped; /**< Paquetes transmitidos descartados */
 } NetworkMetrics;
+
+/**
+ * @brief Estructura para almacenar los resultados de la evaluación de una política de asignación de memoria.
+ */
+typedef struct
+{
+    char policy_name[20];    /**< Nombre de la política de asignación de memoria */
+    int iterations;          /**< Número de iteraciones */
+    float time_taken;        /**< Tiempo de ejecución */
+    size_t total_allocated;  /**< Memoria total asignada */
+    int freed_blocks;        /**< Bloques liberados */
+    int free_blocks;         /**< Bloques libres */
+    size_t free_size;        /**< Tamaño total de memoria libre */
+    float avg_fragmentation; /**< Fragmentación promedio */
+    float external_fragmentation; /**< Fragmentación externa */
+} MemoryMetrics;
 
 /**
  * @brief Obtiene la cantidad de cambios de contexto.
@@ -67,7 +101,7 @@ int get_running_processes(void);
 int get_network_metrics(NetworkMetrics*);
 
 /**
- * @brief Obtiene el procentaje de uso de memoria.
+ * @brief Obtiene el porcentaje de uso de memoria.
  *
  * Pide los valores a get_memory_free y get_memory_total, luego calcula
  * el porcentaje de uso de memoria.
@@ -99,7 +133,7 @@ double get_memory_free(void);
 /**
  * @brief Obtiene el valor de la memoria usada.
  *
- * Pide los valores de memoria libre y total, luego calcula la memoria usada en kB
+ * Pide los valores de memoria libre y total, luego calcula la memoria usada en kB.
  *
  * @return Memoria usada en KB, o -1.0 en caso de error.
  */
@@ -123,6 +157,7 @@ double get_memory_fragmentation(void);
  * @return Uso de CPU como porcentaje (0.0 a 100.0), o -1.0 en caso de error.
  */
 double get_cpu_usage(void);
+
 /**
  * @brief Obtiene las métricas de disco desde /proc/diskstats.
  *
@@ -132,3 +167,30 @@ double get_cpu_usage(void);
  * @return 0 en caso de éxito, -1 en caso de error.
  */
 int get_disk_metrics(DiskMetrics*);
+
+/**
+ * @brief Obtiene las métricas de la política de asignación de memoria First Fit.
+ *
+ * Evalúa la política de asignación de memoria First Fit y retorna los resultados.
+ */
+int get_First_Fit(MemoryMetrics* );
+
+/**
+ * @brief Obtiene las métricas de la política de asignación de memoria Best Fit.
+ *
+ * Evalúa la política de asignación de memoria Best Fit y retorna los resultados.
+ */
+int get_Best_Fit(MemoryMetrics*);
+
+/**
+ * @brief Obtiene las métricas de la política de asignación de memoria Worst Fit.
+ *
+ * Evalúa la política de asignación de memoria Worst Fit y retorna los resultados.
+ */
+int get_Worst_Fit(MemoryMetrics*);
+
+void read_memory_metrics(void);
+
+void ejecutar_memory(int);
+
+#endif // METRICS_H

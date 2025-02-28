@@ -25,6 +25,8 @@
 #include <cjson/cJSON.h> // Para manejar JSON
 #include <stdbool.h>
 
+#define FIFO_PATH "/tmp/my_fifo" // Define the FIFO path
+
 /**
  * @brief Actualiza las métricas del sistema según la configuración proporcionada.
  *
@@ -39,6 +41,13 @@ void update_metrics(Config config);
  * @return Config Estructura de configuración cargada desde el archivo.
  */
 Config load_config(const char* filename);
+
+/**
+ * @brief Limpia la configuración al final del programa.
+ *
+ * @param config Estructura de configuración a limpiar.
+ */
+void clean_config(Config* config);
 
 /**
  * @brief Función principal
@@ -73,16 +82,14 @@ int main(int argc, char* argv[])
         sleep((unsigned int)config.sampling_interval);
     }
 
-    // Limpiar
-    for (int i = 0; i < config.metrics_count; i++)
-    {
-        free(config.metrics[i]);
-    }
-    free(config.metrics);
+    // Limpiar configuración al final del programa
+    clean_config(&config);
 
     // Esperamos a que los hilos terminen (aunque en este caso, no lo harán)
     pthread_join(tid, NULL);
     pthread_join(update_tid, NULL);
+
+
 
     return EXIT_SUCCESS;
 }
@@ -121,7 +128,19 @@ void update_metrics(Config config)
         {
             update_context_switches_gauge();
         }
-        // Agregar más métricas según sea necesario
+        else if (strcmp(config.metrics[i], "First_Fit") == 0)
+        {
+            update_First_Fit_gauge();
+        }
+        else if (strcmp(config.metrics[i], "Best_Fit") == 0)
+        {
+            update_Best_Fit_gauge();
+        }
+        else if (strcmp(config.metrics[i], "Worst_Fit") == 0)
+        {
+            update_Worst_Fit_gauge();
+        }
+        //Agregar más métricas según sea necesario
     }
 }
 
@@ -133,61 +152,114 @@ void update_metrics(Config config)
  */
 Config load_config(const char* filename)
 {
-    Config config = {intervalo, NULL, 0}; // Configuración por defecto
+    Config config = {1, NULL, 0};
 
-    FILE* file = fopen(filename, "r"); // Abrir el archivo en modo lectura
+    FILE* file = fopen(filename, "r");
     if (file == NULL)
     {
         perror("Error al abrir el archivo de configuración");
-        return config; // Retornar la configuración por defecto
+        return config;
     }
 
-    // Leer el contenido del archivo
     fseek(file, 0, SEEK_END);
     long length = ftell(file);
     fseek(file, 0, SEEK_SET);
+
     char* json_data = (char*)malloc((size_t)length + 1);
+    if (json_data == NULL)
+    {
+        perror("Error al asignar memoria para el archivo JSON");
+        fclose(file);
+        return config;
+    }
+
     if (fread(json_data, 1, (size_t)length, file) != (size_t)length)
     {
         perror("Error al leer el archivo de configuración");
         free(json_data);
+        json_data = NULL;
         fclose(file);
-        return config; // Retornar la configuración por defecto
+        return config;
     }
     fclose(file);
     json_data[length] = '\0';
 
-    // Parsear el JSON
     cJSON* json = cJSON_Parse(json_data);
+    free(json_data);
+    json_data = NULL;
     if (json == NULL)
     {
         fprintf(stderr, "Error al parsear el JSON: %s\n", cJSON_GetErrorPtr());
-        free(json_data);
-        return config; // Retornar la configuración por defecto
+        return config;
     }
 
-    // Obtener el intervalo de muestreo
     cJSON* sampling_interval = cJSON_GetObjectItem(json, "sampling_interval");
     if (cJSON_IsNumber(sampling_interval))
     {
         config.sampling_interval = sampling_interval->valueint;
     }
 
-    // Obtener las métricas
     cJSON* metrics = cJSON_GetObjectItem(json, "metrics");
     if (cJSON_IsArray(metrics))
     {
         config.metrics_count = cJSON_GetArraySize(metrics);
-        config.metrics = malloc((size_t)config.metrics_count * sizeof(char*));
+        config.metrics =
+            (char**)calloc((size_t)config.metrics_count, sizeof(char*)); // Usar calloc para inicializar a NULL
+        if (config.metrics == NULL)
+        {
+            perror("Error al asignar memoria para las métricas");
+            cJSON_Delete(json);
+            return config;
+        }
+
         for (int i = 0; i < config.metrics_count; i++)
         {
             cJSON* metric = cJSON_GetArrayItem(metrics, i);
-            config.metrics[i] = strdup(metric->valuestring); // Copiar el nombre de la métrica
+            if (cJSON_IsString(metric))
+            {
+                config.metrics[i] = strdup(metric->valuestring); // Copiar el nombre de la métrica
+                if (config.metrics[i] == NULL)
+                {
+                    perror("Error al asignar memoria para una métrica");
+
+                    // Limpiar lo ya asignado
+                    for (int j = 0; j < i; j++)
+                    {
+                        free(config.metrics[j]);
+                        config.metrics[j] = NULL;
+                    }
+                    free(config.metrics);
+                    config.metrics = NULL;
+
+                    config.metrics = NULL;
+                    config.metrics_count = 0;
+
+                    cJSON_Delete(json);
+                    return config; // Retornar configuración por defecto
+                }
+            }
         }
     }
 
-    // Limpiar
     cJSON_Delete(json);
-    free(json_data);
     return config;
+}
+
+/**
+ * @brief Limpia la configuración al final del programa.
+ *
+ * @param config Estructura de configuración a limpiar.
+ */
+void clean_config(Config* config) {
+    if (config->metrics != NULL) {
+        for (int i = 0; i < config->metrics_count; i++) {
+            if (config->metrics[i] != NULL) { // Validar antes de liberar
+                free(config->metrics[i]);
+                config->metrics[i] = NULL; // Evitar dobles liberaciones
+            }
+        }
+        free(config->metrics);
+        config->metrics = NULL;
+    }
+    config->metrics_count = 0;
 }
