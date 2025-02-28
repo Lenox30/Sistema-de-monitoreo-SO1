@@ -6,7 +6,6 @@
 #ifndef METRICS_H // Directiva para evitar inclusiones múltiples
 #define METRICS_H
 
-#include "memory_metrics.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
